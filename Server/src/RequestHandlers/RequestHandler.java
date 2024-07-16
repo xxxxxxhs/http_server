@@ -1,10 +1,8 @@
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
+package RequestHandlers;
+
+import RequestHandlers.RequestExecutor;
+
 import java.util.HashSet;
-import java.util.LinkedList;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class RequestHandler {
     private static HashSet<String> availableMethods = new HashSet<String>();

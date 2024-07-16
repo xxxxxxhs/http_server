@@ -1,0 +1,20 @@
+[
+  {
+    "name": "Boris",
+    "surname": "Smith",
+    "id": 12444,
+    "city": "London"
+  },
+  {
+    "name": "Paul",
+    "surname": "Jackson",
+    "id": 5537,
+    "city": "New York"
+  },
+  {
+    "name": "Alice",
+    "surname": "Park",
+    "id": 9832,
+    "city": "Liverpool"
+  }
+]
