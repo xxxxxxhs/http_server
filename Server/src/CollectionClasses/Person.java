@@ -9,7 +9,7 @@ import Exceptions.IncorrectValueException;
 
 import java.io.Serializable;
 
-public class Person implements Serializable {
+public class Person implements Serializable, Validatable {
     
     private String name; //Поле не может быть null, Строка не может быть пустой
     private String passportID; //Поле не может быть null
@@ -28,7 +28,7 @@ public class Person implements Serializable {
     public String getName(){
         return name;
     }
-    public String getPassportID(){
+    public String getPassportId(){
         return passportID;
     }
     public Color getEyeColor(){
@@ -40,32 +40,17 @@ public class Person implements Serializable {
     public Location getLocation(){
         return location;
     }
-    public void setName(String name) throws IncorrectValueException{
-        if (name == null || name.trim() == ""){
-            throw new IncorrectValueException("Can't be empty");
-        }
-        else{    
-            this.name = name;
-        }
+    public void setName(String name) {
+        this.name = name;
     }
-    public void setPassportID(String passportID) throws IncorrectValueException{
-        if (passportID == null){
-            throw new IncorrectValueException("Can't be empty");
-        }
-        else{
-            this.passportID = passportID;
-        }
+    public void setPassportID(String passportID) {
+        this.passportID = passportID;
     }
     public void setEyeColor(Color color) {
         this.eyeColor = color;
     }
-    public void setHairColor(Color color) throws IncorrectValueException{
-        if (color == null){
-            throw new IncorrectValueException("Cam't be empty");
-        }
-        else{
-            this.hairColor = color;
-        }
+    public void setHairColor(Color color) {
+        this.hairColor = color;
     }
     public void setLocation(Location location){
         this.location = location;
@@ -74,6 +59,8 @@ public class Person implements Serializable {
     public String toString(){
         return name + "\n";
     }
+
+    @Override
     public boolean validate() {
         if (this.name == null || this.name.equals("")) {return false;}
         if (this.passportID == null) {return false;}

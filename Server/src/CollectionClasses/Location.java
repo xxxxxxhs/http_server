@@ -8,7 +8,7 @@ import java.io.Serializable;
  * class location
  */
 
-public class Location implements Serializable {
+public class Location implements Serializable, Validatable {
     
     private Double x; //Поле не может быть null
     private Float y; //Поле не может быть null
@@ -34,38 +34,20 @@ public class Location implements Serializable {
     public String getName(){
         return name;
     }
-    public void setX(Double x) throws IncorrectValueException{
-        if (x == null) {
-            throw new IncorrectValueException("Can't be empty");
-        }
-        else{
-            this.x = x;
-        }
+    public void setX(Double x) {
+        this.x = x;
     }
-    public void setY(Float y) throws IncorrectValueException{
-        if (y == null) {
-            throw new IncorrectValueException("Can't be empty");
-        }
-        else{
-            this.y = y;
-        }
+    public void setY(Float y) {
+        this.y = y;
     }
-    public void setZ(Long z) throws IncorrectValueException{
-        if (z == null) {
-            throw new IncorrectValueException("Can't be empty");
-        }
-        else{
-            this.z = z;
-        }
+    public void setZ(Long z) {
+        this.z = z;
     }
-    public void setName(String name) throws IncorrectValueException{
-        if (name == null) {
-            throw new IncorrectValueException("Can't be empty");
-        }
-        else{
-            this.name = name;
-        }
+    public void setName(String name) {
+        this.name = name;
     }
+
+    @Override
     public boolean validate() {
         if (this.name != null && this.x != null && this.y != null && this.z != null) {return true;}
         else {return false;}

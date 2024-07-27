@@ -17,11 +17,12 @@ public class Response {
     private HashMap<Integer, String> codeDescriptions;
     private HashMap<String, String> contentTypes;
     public static final int OK_CODE = 200;
+    public static final int CREATED_CODE = 201;
+    public static final int NO_CONTENT_CODE = 204;
     public static final int BAD_REQUEST_CODE = 400;
+    public static final int NO_RIGHTS_CODE = 403;
     public static final int NOT_FOUND_CODE = 404;
     public static final int CONFLICT_CODE = 409;
-    public static final int NO_CONTENT_CODE = 204;
-    public static final int NO_RIGHTS_CODE = 403;
 
     {
         codeDescriptions = new HashMap<>();
@@ -29,6 +30,7 @@ public class Response {
         codeDescriptions.put(404, "Not found");
         codeDescriptions.put(200, "OK");
         codeDescriptions.put(204, "No suitable content");
+        codeDescriptions.put(207, "Multi-Status");
         codeDescriptions.put(409, "Conflict");
         codeDescriptions.put(403, "Not enough rights");
 
@@ -46,12 +48,14 @@ public class Response {
     }
     @Override
     public String toString() {
-        return version + " " + code + " " + codeDescription + "\r\n" +
-                "Content-Type: " + contentType + "\r\n" +
-                "Content-Length: " + contentLength + "\r\n" + "\r\n" +
-                body;
+        StringBuilder sb = new StringBuilder();
+        sb.append(version + " " + code + " " + codeDescription + "\r\n");
+        sb.append("Content-Type: " + contentType + "\r\n");
+        sb.append("Content-Length: " + contentLength + "\r\n" + "\r\n");
+        sb.append(new String(body, StandardCharsets.UTF_8));
+        return sb.toString();
     }
-    public String gerResponseHeader() {
+    public String getResponseHeader() {
         return version + " " + code + " " + codeDescription + "\r\n" +
                 "Content-Type: " + contentType + "\r\n" +
                 "Content-Length: " + contentLength + "\r\n" + "\r\n";
@@ -60,6 +64,10 @@ public class Response {
     public static Response getBadRequestResponse() {
         return new Response(BAD_REQUEST_CODE, "text/html",
                 "<h1>Bad request</h1>".getBytes(StandardCharsets.UTF_8));
+    }
+    public void setBody(String body) {
+        this.contentLength = body.length();
+        this.body = body.getBytes(StandardCharsets.UTF_8);
     }
     public static Response getNotFoundResponse() {
         return new Response(NOT_FOUND_CODE, "text/html",
@@ -76,6 +84,10 @@ public class Response {
     public static Response getNotEnoughRightsResponse() {
         return new Response(NO_RIGHTS_CODE, "text/html",
                 "<h1>Not enough rights to access</h1>".getBytes(StandardCharsets.UTF_8));
+    }
+    public static Response getCreatedResponse() {
+        return new Response(CREATED_CODE, "text/html",
+                "<h1>New object was added successfully</h1>".getBytes(StandardCharsets.UTF_8));
     }
 
     public static String getContentTypeByFileType(String filePath) {

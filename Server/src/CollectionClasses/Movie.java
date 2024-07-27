@@ -9,7 +9,7 @@ import java.time.LocalDateTime;
  * class Movie, which instances form collection
  */
 
-public class Movie implements Comparable<Movie>, Serializable {
+public class Movie implements Comparable<Movie>, Serializable, Validatable {
     
     private static long idCounter = 0;
     private long id;//Значение поля должно быть больше 0, Значение этого поля должно быть уникальным, Значение этого поля должно генерироваться автоматически
@@ -21,7 +21,7 @@ public class Movie implements Comparable<Movie>, Serializable {
     private Float totalBoxOffice; //Поле может быть null, Значение поля должно быть больше 0
     private MpaaRating mpaaRating; //Поле не может быть null
     private Person screenwriter;
-    public static final long serialVersionUID = 1488228;
+    private static final long serialVersionUID = 1488228;
     
     /*
      * class constructor
@@ -45,62 +45,23 @@ public class Movie implements Comparable<Movie>, Serializable {
         setMpaaRating(mpaaRating);
         setScreenWriter(screenWriter);
     }
-    public void setName(String name) throws IncorrectValueException{
-        if (name == null || name.trim() == ""){
-            throw new IncorrectValueException("Can't be empty");
-        }
-        else{
-            this.name = name;
-        }
+    public void setName(String name) {
+        this.name = name;
     }
-    public void setCoordinates(Coordinates coordinates) throws IncorrectValueException{
-        if (coordinates == null){
-            throw new IncorrectValueException("X-cor can't be less than -170");
-        }
-        else if(coordinates.getX() <= -170){
-            throw new IncorrectValueException("Coordinates can't be empty");
-        }
-        else{
-            this.coordinates = coordinates;
-        }
+    public void setCoordinates(Coordinates coordinates) {
+        this.coordinates = coordinates;
     }
-    public void setOscarsCount(Integer oscarsCount) throws IncorrectValueException{
-        if (oscarsCount == null) {
-            this.oscarsCount = null;
-        }
-        else if (oscarsCount <= 0){
-            throw new IncorrectValueException("Can't be less than 0 or empty");
-        }
-        else{;
-            this.oscarsCount = oscarsCount;
-        }
+    public void setOscarsCount(Integer oscarsCount) {
+        this.oscarsCount = oscarsCount;
     }
-    public void setGoldenPalmCount(long goldenPalmCount) throws IncorrectValueException{
-        if (goldenPalmCount <= 0){
-            throw new IncorrectValueException("Can't be less than 0");
-        }
-        else{
-            this.goldenPalmCount = goldenPalmCount;
-        }
+    public void setGoldenPalmCount(long goldenPalmCount) {
+        this.goldenPalmCount = goldenPalmCount;
     }
-    public void setTotalBoxOffic(Float totalBoxOffice) throws IncorrectValueException{
-        if (totalBoxOffice == null) {
-            this.totalBoxOffice = null;
-        }
-        else if (totalBoxOffice > 0){
-            this.totalBoxOffice = totalBoxOffice;
-        }
-        else{
-            throw new IncorrectValueException("Can't be less than 0");
-        }
+    public void setTotalBoxOffic(Float totalBoxOffice) {
+        this.totalBoxOffice = totalBoxOffice;
     }
-    public void setMpaaRating(MpaaRating mpaaRating) throws IncorrectValueException{
-        if (mpaaRating == null){
-            throw new IncorrectValueException("Can't be empty");
-        }
-        else{
-            this.mpaaRating = mpaaRating;
-        }
+    public void setMpaaRating(MpaaRating mpaaRating) {
+        this.mpaaRating = mpaaRating;
     }
     public void setScreenWriter(Person screenWriter){
         this.screenwriter = screenWriter;
@@ -151,10 +112,10 @@ public class Movie implements Comparable<Movie>, Serializable {
     public int compareTo(Movie mv) {
         return name.compareTo(mv.getName());
     }
-
-    public Boolean validate() {
-        if (this.name == null || this.name.equals(""))  {return false;}
-        if (this.coordinates == null) {return false;}
+    @Override
+    public boolean validate() {
+        if (this.name == null || this.name.isEmpty())  {return false;}
+        if (!this.coordinates.validate()) {return false;}
         if (this.oscarsCount != null) {if (this.oscarsCount <= 0) {return false;}}
         if (this.goldenPalmCount <= 0) {return false;}
         if (this.totalBoxOffice != null) {if (this.totalBoxOffice <= 0) {return false;}}

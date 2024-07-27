@@ -15,65 +15,149 @@ public class SqlDumper{
             throw new RuntimeException(e);
         }
     }
-    public void addMovie(Movie movie, String username) throws SQLException {
-        int coordinatesId = addCoordinates(movie.getCoordinates());
-        int screenwriterId = addPerson(movie.getScreenWriter());
-        String sql = "INSERT INTO movie (name, coordinates_id, oscars_count, golden_palm_count, total_box_office, mpaa_rating_id, person_id, creator) VALUES (?, ?, ?, ?, ?, (SELECT id FROM mpaa_rating WHERE value = ?), ?)";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, movie.getName());
-            pstmt.setInt(2, coordinatesId);
-            pstmt.setInt(3, movie.getOscarsCount());
-            pstmt.setLong(4, movie.getGoldenPalmCount());
-            pstmt.setFloat(5, movie.getTotalBoxOffice());
-            pstmt.setString(6, movie.getMpaaRating().name()); // Предполагается, что перечисление уже в БД
-            pstmt.setInt(7, screenwriterId);
-            pstmt.executeUpdate();
-        }
-    }
-    private int addPerson(Person person) throws SQLException {
-        // Сначала добавляем location, получаем её ID
-        int locationId = addLocation(person.getLocation());
+    public int add(Movie movie) throws SQLException {
+        int id = -1;
+        int coordinatesId = add(movie.getCoordinates());
+        int screenwriterId = add(movie.getScreenWriter());
 
-        String sql = "INSERT INTO person (name, passport_id, eyecolor_id, haircolor_id, location_id) VALUES (?, ?, (SELECT id FROM color WHERE value = ?), (SELECT id FROM color WHERE value = ?), ?) RETURNING id";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setString(1, person.getName());
-            pstmt.setString(2, person.getPassportID());
-            pstmt.setString(3, person.getEyeColor().name()); // Передача значения enum как строки
-            pstmt.setString(4, person.getHairColor().name());
-            pstmt.setInt(5, locationId);
-            ResultSet rs = pstmt.executeQuery();
+        String checkSql = "SELECT id FROM movie WHERE name = ? AND coordinates_id = ? AND oscars_count = ? " +
+                "AND golden_palm_count = ? AND total_box_office = ? " +
+                "AND mpaa_rating_id = (SELECT id FROM mpaa_rating WHERE value = ?) AND person_id = ?";
+        String insertSql = "INSERT INTO movie (name, coordinates_id, oscars_count, golden_palm_count, " +
+                "total_box_office, mpaa_rating_id, person_id) " +
+                "VALUES (?, ?, ?, ?, ?, (SELECT id FROM mpaa_rating WHERE value = ?), ?) RETURNING id";
+
+        try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+            checkStmt.setString(1, movie.getName());
+            checkStmt.setInt(2, coordinatesId);
+            checkStmt.setInt(3, movie.getOscarsCount());
+            checkStmt.setLong(4, movie.getGoldenPalmCount());
+            checkStmt.setFloat(5, movie.getTotalBoxOffice());
+            checkStmt.setString(6, movie.getMpaaRating().name());
+            checkStmt.setInt(7, screenwriterId);
+            ResultSet rs = checkStmt.executeQuery();
+
             if (rs.next()) {
-                return rs.getInt(1);
+                id = rs.getInt("id");
+            } else {
+                try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+                    insertStmt.setString(1, movie.getName());
+                    insertStmt.setInt(2, coordinatesId);
+                    insertStmt.setInt(3, movie.getOscarsCount());
+                    insertStmt.setLong(4, movie.getGoldenPalmCount());
+                    insertStmt.setFloat(5, movie.getTotalBoxOffice());
+                    insertStmt.setString(6, movie.getMpaaRating().name());
+                    insertStmt.setInt(7, screenwriterId);
+                    ResultSet insertRs = insertStmt.executeQuery();
+                    if (insertRs.next()) {
+                        id = insertRs.getInt("id");
+                    }
+                }
             }
         }
-        return -1;
+        return id;
+    }
+    public int add(Person person) throws SQLException {
+        // Добавление или получение id для location
+        int locationId = add(person.getLocation());
+
+        String checkSql = "SELECT id FROM person WHERE name = ? AND passport_id = ? AND " +
+                "eyecolor_id = (SELECT id FROM color WHERE value = ?) " +
+                "AND haircolor_id = (SELECT id FROM color WHERE value = ?) AND location_id = ?";
+        String insertSql = "INSERT INTO person (name, passport_id, eyecolor_id, haircolor_id, location_id) " +
+                "VALUES (?, ?, (SELECT id FROM color WHERE value = ?), " +
+                "(SELECT id FROM color WHERE value = ?), ?) RETURNING id";
+        int id = -1;
+
+        try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+            checkStmt.setString(1, person.getName());
+            checkStmt.setString(2, person.getPassportId());
+            checkStmt.setString(3, person.getEyeColor().name());
+            checkStmt.setString(4, person.getHairColor().name());
+            checkStmt.setInt(5, locationId);
+            ResultSet rs = checkStmt.executeQuery();
+
+            if (rs.next()) {
+                id = rs.getInt("id");
+            } else {
+                try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+                    insertStmt.setString(1, person.getName());
+                    insertStmt.setString(2, person.getPassportId());
+                    insertStmt.setString(3, person.getEyeColor().name());
+                    insertStmt.setString(4, person.getHairColor().name());
+                    insertStmt.setInt(5, locationId);
+                    ResultSet insertRs = insertStmt.executeQuery();
+                    if (insertRs.next()) {
+                        id = insertRs.getInt("id");
+                    }
+                }
+            }
+        }
+
+        return id;
     }
 
-    private int addCoordinates(Coordinates coordinates) throws SQLException {
-        String sql = "INSERT INTO coordinates (x, y) VALUES (?, ?) RETURNING id";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setFloat(1, coordinates.getX());
-            pstmt.setDouble(2, coordinates.getY());
-            ResultSet rs = pstmt.executeQuery();
+    public int add(Coordinates coordinates) throws SQLException {
+        String checkSql = "SELECT id FROM coordinates WHERE x = ? AND y = ?";
+        String insertSql = "INSERT INTO coordinates (x, y) VALUES (?, ?) RETURNING id";
+        int id = -1;
+
+        try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+            // Проверяем, существуют ли такие координаты
+            checkStmt.setFloat(1, coordinates.getX());
+            checkStmt.setDouble(2, coordinates.getY());
+            ResultSet rs = checkStmt.executeQuery();
+
             if (rs.next()) {
-                return rs.getInt(1);
+                // Если координаты существуют, возвращаем их id
+                id = rs.getInt("id");
+            } else {
+                // Если координаты не существуют, добавляем их
+                try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+                    insertStmt.setFloat(1, coordinates.getX());
+                    insertStmt.setDouble(2, coordinates.getY());
+                    ResultSet insertRs = insertStmt.executeQuery();
+                    if (insertRs.next()) {
+                        id = insertRs.getInt("id");
+                    }
+                }
             }
         }
-        return -1; // Или выбросить исключение
+
+        return id;
     }
-    private int addLocation(Location location) throws SQLException {
-        String sql = "INSERT INTO location (x, y, z, name) VALUES (?, ?, ?, ?) RETURNING id";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
-            pstmt.setDouble(1, location.getX());
-            pstmt.setFloat(2, location.getY());
-            pstmt.setLong(3, location.getZ());
-            pstmt.setString(4, location.getName());
-            ResultSet rs = pstmt.executeQuery();
+    public int add(Location location) throws SQLException {
+        String checkSql = "SELECT id FROM location WHERE x = ? AND y = ? AND z = ? AND name = ?";
+        String insertSql = "INSERT INTO location (x, y, z, name) VALUES (?, ?, ?, ?) RETURNING id";
+        int id = -1;
+
+        try (PreparedStatement checkStmt = connection.prepareStatement(checkSql)) {
+            // Проверяем, существует ли запись с такими же координатами
+            checkStmt.setDouble(1, location.getX());
+            checkStmt.setFloat(2, location.getY());
+            checkStmt.setLong(3, location.getZ());
+            checkStmt.setString(4, location.getName());
+            ResultSet rs = checkStmt.executeQuery();
+
             if (rs.next()) {
-                return rs.getInt(1);
+                // Если координаты существуют, возвращаем их id
+                id = rs.getInt("id");
+            } else {
+                // Если координаты не существуют, добавляем их
+                try (PreparedStatement insertStmt = connection.prepareStatement(insertSql)) {
+                    insertStmt.setDouble(1, location.getX());
+                    insertStmt.setFloat(2, location.getY());
+                    insertStmt.setLong(3, location.getZ());
+                    insertStmt.setString(4, location.getName());
+                    ResultSet insertRs = insertStmt.executeQuery();
+                    if (insertRs.next()) {
+                        id = insertRs.getInt("id");
+                    }
+                }
             }
         }
-        return -1; // Или выбросить исключение
+
+        return id;
     }
 
     public LinkedList<Movie> loadMovie(HashMap<String, String> headers) {
@@ -151,8 +235,6 @@ public class SqlDumper{
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        } catch (IncorrectValueException e) {
-            e.printStackTrace();
         }
         return coordinates;
     }
@@ -195,23 +277,24 @@ public class SqlDumper{
             pstmt.setString(8, movie.getScreenWriter().getName());
             pstmt.setLong(9, id);
             try {
-                addCoordinates(movie.getCoordinates());
+                add(movie.getCoordinates());
             } catch (SQLException e) {
                 e.printStackTrace();
             }
             try {
-                addLocation(movie.getScreenWriter().getLocation());
+                add(movie.getScreenWriter().getLocation());
             } catch (SQLException e) {
                 e.printStackTrace();
             }
             try {
-                addPerson(movie.getScreenWriter());
+                add(movie.getScreenWriter());
             } catch (SQLException e) {e.printStackTrace();}
             pstmt.executeUpdate();
         } catch (SQLException e) {
             throw new RuntimeException(e);
         }
     }
+    /*
     public void clear(String username) {
         String sql = "DELETE FROM movie WHERE creator = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql);) {
@@ -232,4 +315,5 @@ public class SqlDumper{
             pstmt.executeUpdate();
         } catch (SQLException e) {e.printStackTrace();}
     }
+     */
 }

@@ -8,23 +8,18 @@ import java.io.Serializable;
  * class coordinates
  */
 
-public class Coordinates implements Serializable {
+public class Coordinates implements Serializable, Validatable {
     
     private float x; //Значение поля должно быть больше -170
     private double y;
     public static final long SerialVersionUID = 1234288;
     
-    public Coordinates(float x, double y) throws IncorrectValueException{
+    public Coordinates(float x, double y) {
         setX(x);
         setY(y);
     }
-    public void setX(float x) throws IncorrectValueException{
-        if (x <= -170){
-            throw new IncorrectValueException("Must be more than -170");
-        }
-        else{
-            this.x = x;
-        }
+    public void setX(float x){
+        this.x = x;
     }
     public void setY(double y){
         this.y = y;
@@ -35,7 +30,7 @@ public class Coordinates implements Serializable {
     public double getY(){
         return y;
     }
-
+    @Override
     public boolean validate() {
         if (this.x <= -170) return false;
         return true;

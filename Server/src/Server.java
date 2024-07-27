@@ -26,39 +26,16 @@ public class Server {
         }
     }
 
-    public void start() {
+    public void start() throws IOException {
         while (true) {
             try {
                 socket = server.accept();
-                System.out.println("CONNECTED");
-                handle(socket);
+                System.out.println("CONNECTED " + socket.getInetAddress());
+                new ClientListener(socket);
             } catch (IOException e) {
+                server.close();
                 throw new RuntimeException(e);
             }
-        }
-    }
-    private void handle(Socket socket) {
-        try (BufferedReader input = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             OutputStream output = socket.getOutputStream()) {
-            String requestLine;
-            StringBuilder finalRequest = new StringBuilder();
-            // Чтение строки запроса и заголовков
-            while ((requestLine = input.readLine()) != null && !requestLine.isEmpty()) {
-                requestLine = requestLine.replace("\\n", "\r\n");
-                finalRequest.append(requestLine).append("\n");
-            }
-            // Чтение тела запроса (если есть)
-            if (input.ready()) {
-                while (input.ready() && (requestLine = input.readLine()) != null) {
-                    finalRequest.append(requestLine).append("\n");
-                }
-            }
-            Response response = RequestHandler.handleRequest(finalRequest.toString());
-            output.write(response.gerResponseHeader().getBytes(StandardCharsets.UTF_8));
-            if (response.getResponseBody() != null) output.write(response.getResponseBody());
-            output.flush();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }
