@@ -10,7 +10,7 @@ public class ClientRequest {
     private String path;
     private String method;
     private String version;
-    private HashMap<String, String> headers;
+    private HashMap<String, String> headers, queryParams;
     private String body;
     public ClientRequest(String request) {
         String[] lines = request.split("\n");
@@ -19,6 +19,17 @@ public class ClientRequest {
         this.path = "Server/Resources" + firstLine.split(" ")[1];
         this.version = firstLine.split(" ")[2].trim();
         this.headers = new HashMap<>();
+        this.queryParams = new HashMap<>();
+
+        if (path.split("\\?").length == 2) {
+            //getting query params from URL
+            String[] params = path.split("\\?")[1].split("&");
+            path = path.split("\\?")[0];
+
+            for (String j : params) {
+                queryParams.put(j.split("=")[0], j.split("=")[1]);
+            }
+        }
 
         int i = 1;
         while (i < lines.length && !lines[i].isEmpty()) {
@@ -42,6 +53,7 @@ public class ClientRequest {
     public boolean isHasBody() {return (body == null) ? false : true;}
     public String getBody() {return body;}
     public HashMap getHeaders() {return headers;}
+    public HashMap getQueryParams() {return queryParams;}
     public String getHeader(String key) {
         return (headers.containsKey(key)) ? headers.get(key) : null;
     }

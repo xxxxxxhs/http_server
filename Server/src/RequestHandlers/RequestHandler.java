@@ -12,6 +12,8 @@ public class RequestHandler {
     static {
         availableMethods.put("GET", true); // true, если для http-метода не важен content-type
         availableMethods.put("POST", false); //false, если методу важен переданный в body тип контента
+        availableMethods.put("PUT", false);
+        availableMethods.put("DELETE", true);
 
         availableVersions.add("HTTP/1.1");
         availableVersions.add("HTTP/1.0");
@@ -23,7 +25,11 @@ public class RequestHandler {
         try {
             ClientRequest clientRequest = new ClientRequest(request);
             System.out.println(clientRequest.toString());
-            if (!availableMethods.containsKey(clientRequest.getMethod())) return Response.getBadRequestResponse();
+            if (!availableMethods.containsKey(clientRequest.getMethod())) {
+                Response response = Response.getBadRequestResponse();
+                response.setBody("<h1>Unknown method, availiable ones are: GET, POST, PUT, DELETE</h1>");
+                return response;
+            }
             if (!availableMethods.get(clientRequest.getMethod())) {
                 HashMap headers = clientRequest.getHeaders();
                 if (!headers.containsKey("Content-Type")) {

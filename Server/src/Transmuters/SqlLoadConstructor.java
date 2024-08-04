@@ -12,6 +12,7 @@ public class SqlLoadConstructor {
 
     static {
         movieFields.put("id", false);
+        movieFields.put("name", true);
         movieFields.put("coordinates-x", false);
         movieFields.put("coordinates-y", false);
         movieFields.put("creation-date", true);

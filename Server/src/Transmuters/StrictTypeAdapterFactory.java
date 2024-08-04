@@ -30,6 +30,7 @@ public class StrictTypeAdapterFactory implements TypeAdapterFactory {
                 if (jsonElement.isJsonObject()) {
                     // Если элемент является JsonObject, проверяем поля
                     JsonObject jsonObject = jsonElement.getAsJsonObject();
+                    jsonObject.remove("id");
                     // Получаем все поля класса
                     Field[] fields = typeToken.getRawType().getDeclaredFields();
                     // Создаем набор имен полей

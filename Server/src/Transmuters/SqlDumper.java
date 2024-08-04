@@ -1,10 +1,13 @@
 package Transmuters;
 
 import CollectionClasses.*;
-import Exceptions.IncorrectValueException;
 import java.sql.*;
 import java.util.HashMap;
 import java.util.LinkedList;
+
+/*
+class which is responsible to operate w/ DB
+ */
 
 public class SqlDumper{
     private final Connection connection;
@@ -160,10 +163,10 @@ public class SqlDumper{
         return id;
     }
 
-    public LinkedList<Movie> loadMovie(HashMap<String, String> headers) {
+    public LinkedList<Movie> loadMovie(HashMap<String, String> queryParams) {
         LinkedList<Movie> movies = new LinkedList<>();
 
-        String sql = SqlLoadConstructor.getSqlLoadMovie(headers);
+        String sql = SqlLoadConstructor.getSqlLoadMovie(queryParams);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery()) {
@@ -191,15 +194,13 @@ public class SqlDumper{
             }
         } catch (SQLException e) {
             e.printStackTrace();
-        } catch (IncorrectValueException e) {
-            e.printStackTrace();
         }
         return movies;
     }
 
-    public LinkedList<Person> loadPerson(HashMap<String, String> headers) {
+    public LinkedList<Person> loadPerson(HashMap<String, String> queryParams) {
         LinkedList<Person> persons = new LinkedList<>();
-        String sql = SqlLoadConstructor.getSqlLoadPerson(headers);
+        String sql = SqlLoadConstructor.getSqlLoadPerson(queryParams);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql);
              ResultSet rs = stmt.executeQuery();) {
@@ -210,27 +211,26 @@ public class SqlDumper{
                         Color.valueOf(rs.getString("hair_color").toUpperCase()),
                         new Location(rs.getDouble("location_x"), rs.getFloat("location_y"),
                                 rs.getLong("location_z"), rs.getString("location_name")));
-
+                person.setId(rs.getLong("id"));
                 if (person.validate()) persons.add(person);
             }
 
         } catch (SQLException e) {
             e.printStackTrace();
-        } catch (IncorrectValueException e) {
-            e.printStackTrace();
         }
         return persons;
     }
 
-    public LinkedList<Coordinates> loadCoordinates(HashMap<String, String> headers) {
+    public LinkedList<Coordinates> loadCoordinates(HashMap<String, String> queryParams) {
         LinkedList<Coordinates> coordinates = new LinkedList<>();
-        String sql = SqlLoadConstructor.getSqlLoadCoordinates(headers);
+        String sql = SqlLoadConstructor.getSqlLoadCoordinates(queryParams);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery()) {
 
             while (rs.next()) {
                 Coordinates coor = new Coordinates(rs.getFloat("x"), rs.getDouble("y"));
+                coor.setId(rs.getLong("id"));
                 if (coor.validate()) coordinates.add(coor);
             }
         } catch (SQLException e) {
@@ -239,9 +239,9 @@ public class SqlDumper{
         return coordinates;
     }
 
-    public LinkedList<Location> loadLocation(HashMap<String, String> headers) {
+    public LinkedList<Location> loadLocation(HashMap<String, String> queryParams) {
         LinkedList<Location> locations = new LinkedList<>();
-        String sql = SqlLoadConstructor.getSqlLoadLocation(headers);
+        String sql = SqlLoadConstructor.getSqlLoadLocation(queryParams);
 
         try (PreparedStatement stmt = connection.prepareStatement(sql);
             ResultSet rs = stmt.executeQuery()) {
@@ -249,11 +249,10 @@ public class SqlDumper{
             while (rs.next()) {
                 Location location = new Location(rs.getDouble("x"), rs.getFloat("y"),
                         rs.getLong("z"), rs.getString("name"));
+                location.setId(rs.getLong("id"));
                 if (location.validate()) locations.add(location);
             }
         } catch (SQLException e) {
-            e.printStackTrace();
-        } catch (IncorrectValueException e) {
             e.printStackTrace();
         }
         return locations;
@@ -265,7 +264,7 @@ public class SqlDumper{
                 "creation_date = now(), oscars_count = ?, golden_palm_count = ?, " +
                 "total_box_office = ?, mpaa_rating_id = (SELECT id FROM mpaa_rating WHERE value = ?), " +
                 "person_id = (SELECT id FROM person WHERE name = ?) " +
-                "WHERE id = ?";
+                "WHERE id = ?;";
         try (PreparedStatement pstmt = connection.prepareStatement(sql);) {
             pstmt.setString(1, movie.getName());
             pstmt.setFloat(2, movie.getCoordinates().getX());
@@ -294,19 +293,95 @@ public class SqlDumper{
             throw new RuntimeException(e);
         }
     }
+
+    public void update(Coordinates coordinates, long id) {
+        String sql = "UPDATE coordinates SET x = ?, y = ? WHERE id = ?";
+        try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setFloat(1, coordinates.getX());
+            pstmt.setDouble(2, coordinates.getY());
+            pstmt.setLong(3, id);
+
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void update(Location location, long id) {
+        String sql = "UPDATE location SET x = ?, y = ?, z = ?, name = ? WHERE id = ?";
+
+        try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setDouble(1, location.getX());
+            pstmt.setFloat(2, location.getY());
+            pstmt.setLong(3, location.getZ());
+            pstmt.setString(4, location.getName());
+            pstmt.setLong(5, id);
+
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void update(Person person, long id) {
+        String sql = "UPDATE person SET name = ?, passport_id = ?, " +
+                "eyecolor_id = (SELECT id FROM color WHERE value = ?), " +
+                "haircolor_id = (SELECT id FROM color WHERE value = ?), " +
+                "location_id = (SELECT id FROM location WHERE x = ? AND y = ? AND z = ? AND name = ?) " +
+                "WHERE id = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(sql)) {
+
+            pstmt.setString(1, person.getName());
+            pstmt.setString(2, person.getPassportId());
+            pstmt.setString(3, person.getEyeColor().name());
+            pstmt.setString(4, person.getHairColor().name());
+            pstmt.setDouble(5, person.getLocation().getX());
+            pstmt.setFloat(6, person.getLocation().getY());
+            pstmt.setLong(7, person.getLocation().getZ());
+            pstmt.setString(8, person.getLocation().getName());
+            pstmt.setLong(9, id);
+
+            try {
+                add(person.getLocation());
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+
+            pstmt.executeUpdate();
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public boolean existsById(String className, long id) {
+        String sql = "SELECT 1 FROM " + className.toLowerCase() + " WHERE id = ?";
+
+        try(PreparedStatement pstmt = connection.prepareStatement(sql)) {
+            pstmt.setLong(1, id);
+
+            try(ResultSet rs = pstmt.executeQuery()) {
+                return rs.next();
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public void removeById(String className, long id) {
+        String sql = "DELETE FROM " + className.toLowerCase() + " WHERE id = ?";
+        try (PreparedStatement pstmt = connection.prepareStatement(sql);) {
+            pstmt.setLong(1, id);
+            pstmt.executeUpdate();
+        } catch (SQLException e) {e.printStackTrace();}
+    }
     /*
     public void clear(String username) {
         String sql = "DELETE FROM movie WHERE creator = ?";
         try (PreparedStatement pstmt = connection.prepareStatement(sql);) {
             pstmt.setString(1, username);
             pstmt.executeUpdate();
-        } catch (SQLException e) {e.printStackTrace();}
-    }
-    public void removeById(long id) {
-        String sql = "DELETE FROM movie WHERE id = ?";
-        try (PreparedStatement pstmt = connection.prepareStatement(sql);) {
-            pstmt.setLong(1, id);
-            pstmt.executeQuery();
         } catch (SQLException e) {e.printStackTrace();}
     }
     public void removeFirst() {

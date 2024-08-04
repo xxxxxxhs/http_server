@@ -5,12 +5,10 @@ package CollectionClasses;
  * describes movie's screenwriter
  */
 
-import Exceptions.IncorrectValueException;
-
 import java.io.Serializable;
 
 public class Person implements Serializable, Validatable {
-    
+    private long id;
     private String name; //Поле не может быть null, Строка не может быть пустой
     private String passportID; //Поле не может быть null
     private Color eyeColor; //Поле может быть null
@@ -18,7 +16,7 @@ public class Person implements Serializable, Validatable {
     private Location location; //Поле может быть null
     public static final long SerialVersionUID = 123488;
     
-    public Person (String name, String passportID, Color eyeColor, Color hairColor, Location locantion) throws IncorrectValueException{
+    public Person (String name, String passportID, Color eyeColor, Color hairColor, Location locantion) {
         setName(name);
         setPassportID(passportID);
         setEyeColor(hairColor);
@@ -55,6 +53,7 @@ public class Person implements Serializable, Validatable {
     public void setLocation(Location location){
         this.location = location;
     }
+    public void setId(long id) {this.id = id;}
     @Override
     public String toString(){
         return name + "\n";

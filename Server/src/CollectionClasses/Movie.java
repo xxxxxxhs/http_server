@@ -1,7 +1,5 @@
 package CollectionClasses;
 
-import Exceptions.IncorrectValueException;
-
 import java.io.Serializable;
 import java.time.LocalDateTime;
 
@@ -34,7 +32,8 @@ public class Movie implements Comparable<Movie>, Serializable, Validatable {
      * @param mpaaRating    mpaa rating
      * @param screenwriter  movie's screenwriter
      */
-    public Movie(String name, Coordinates coordinates, Integer oscarsCount, long goldenPalmCount, Float totalBoxOffice, MpaaRating mpaaRating, Person screenWriter) throws IncorrectValueException{
+    public Movie(String name, Coordinates coordinates, Integer oscarsCount, long goldenPalmCount,
+                 Float totalBoxOffice, MpaaRating mpaaRating, Person screenWriter) {
         this.creationDate = LocalDateTime.now();
         this.id = ++idCounter;
         setName(name);

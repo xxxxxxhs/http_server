@@ -1,7 +1,5 @@
 package CollectionClasses;
 
-import Exceptions.IncorrectValueException;
-
 import java.io.Serializable;
 
 /*
@@ -9,14 +7,14 @@ import java.io.Serializable;
  */
 
 public class Location implements Serializable, Validatable {
-    
+    private long id;
     private Double x; //Поле не может быть null
     private Float y; //Поле не может быть null
     private Long z; //Поле не может быть null
     private String name; //Поле не может быть null
     public static final long SerialVersionUID = 123456;
 
-    public Location(Double x, Float y, Long z, String name) throws IncorrectValueException{
+    public Location(Double x, Float y, Long z, String name) {
         setX(x);
         setY(y);
         setZ(z);
@@ -46,6 +44,7 @@ public class Location implements Serializable, Validatable {
     public void setName(String name) {
         this.name = name;
     }
+    public void setId(long id) {this.id = id;}
 
     @Override
     public boolean validate() {

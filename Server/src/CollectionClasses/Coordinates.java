@@ -1,7 +1,5 @@
 package CollectionClasses;
 
-import Exceptions.IncorrectValueException;
-
 import java.io.Serializable;
 
 /*
@@ -9,7 +7,7 @@ import java.io.Serializable;
  */
 
 public class Coordinates implements Serializable, Validatable {
-    
+    private long id;
     private float x; //Значение поля должно быть больше -170
     private double y;
     public static final long SerialVersionUID = 1234288;
@@ -30,6 +28,7 @@ public class Coordinates implements Serializable, Validatable {
     public double getY(){
         return y;
     }
+    public void setId(long id) {this.id = id;}
     @Override
     public boolean validate() {
         if (this.x <= -170) return false;
